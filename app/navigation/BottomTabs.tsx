@@ -1,8 +1,8 @@
-import React from 'react';
+import { AntDesign } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import React from 'react';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AntDesign } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -57,6 +57,7 @@ const BottomTabs = () => {
             <AntDesign name="user" size={size} color={color} />
           ),
         }}
+        initialParams={{ userId: '123', userName: 'Sonam' }}
       />
     </Tab.Navigator>
   );

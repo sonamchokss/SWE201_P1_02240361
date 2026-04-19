@@ -1,6 +1,8 @@
 import { AntDesign } from '@expo/vector-icons';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  Dimensions,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,105 +10,148 @@ import {
   View,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import { isPortrait, isTablet, moderateScale, responsiveFontSize, scale, verticalScale } from '../utils/responsive';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
   const { colors, toggleTheme, theme } = useTheme();
+  const [orientation, setOrientation] = useState(isPortrait() ? 'portrait' : 'landscape');
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setOrientation(window.height > window.width ? 'portrait' : 'landscape');
+    });
+    return () => subscription?.remove();
+  }, []);
+
+  const features = [
+    { id: 1, icon: 'bulb', title: 'Creative', desc: 'Express yourself freely' },
+    { id: 2, icon: 'mobile', title: 'Mobile', desc: 'On the go access' },
+    { id: 3, icon: 'clock-circle', title: 'Fast', desc: 'Lightning speed' },
+    { id: 4, icon: 'lock', title: 'Secure', desc: 'Your data safe' },
+  ];
+
+  const getNumColumns = () => {
+    if (isTablet()) return orientation === 'portrait' ? 3 : 4;
+    return orientation === 'portrait' ? 2 : 3;
+  };
 
   return (
     <ScrollView 
       style={[styles.container, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
     >
-      {/* Header Section */}
-      <View style={[styles.header, { backgroundColor: colors.primary }]}>
-        <View style={styles.iconCircle}>
-          <AntDesign name="smile" size={50} color="#FFFFFF" />
+      {/* Header Section - Responsive */}
+      <View style={[
+        styles.header, 
+        { backgroundColor: colors.primary },
+        orientation === 'landscape' && styles.headerLandscape
+      ]}>
+        <View style={[styles.iconCircle, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+          <AntDesign name="smile" size={moderateScale(50)} color="#FFFFFF" />
         </View>
-        <Text style={styles.welcome}>Welcome back!</Text>
-        <Text style={styles.appName}>MyApp</Text>
-        <Text style={styles.tagline}>Your journey starts here</Text>
+        <Text style={[styles.welcome, { fontSize: responsiveFontSize(16) }]}>Welcome back!</Text>
+        <Text style={[styles.appName, { fontSize: responsiveFontSize(32) }]}>MyApp</Text>
+        <Text style={[styles.tagline, { fontSize: responsiveFontSize(14) }]}>Your journey starts here</Text>
       </View>
 
-      {/* Theme Toggle Button */}
+      {/* Theme Toggle Button - Responsive */}
       <TouchableOpacity
         style={[styles.themeButton, { backgroundColor: colors.card }]}
         onPress={toggleTheme}
       >
         <AntDesign 
           name={theme === 'light' ? 'eye' : 'bulb'} 
-          size={20} 
+          size={moderateScale(20)} 
           color={colors.primary} 
         />
-        <Text style={[styles.themeButtonText, { color: colors.text }]}>
+        <Text style={[styles.themeButtonText, { color: colors.text, fontSize: responsiveFontSize(14) }]}>
           {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
         </Text>
       </TouchableOpacity>
 
-      {/* Quick Access Section */}
+      {/* Features Grid - Responsive */}
+      <View style={styles.featuresContainer}>
+        <Text style={[styles.sectionTitle, { color: colors.text, fontSize: responsiveFontSize(20) }]}>
+          Features
+        </Text>
+        <View style={[styles.featuresGrid, { flexDirection: 'row', flexWrap: 'wrap' }]}>
+          {features.map(feature => (
+            <View
+              key={feature.id}
+              style={[
+                styles.featureCard, 
+                { 
+                  backgroundColor: colors.card,
+                  width: orientation === 'portrait' ? '48%' : '31%',
+                }
+              ]}
+            >
+              <View style={[styles.featureIconCircle, { backgroundColor: colors.accent }]}>
+                <AntDesign name={feature.icon} size={moderateScale(32)} color={colors.primary} />
+              </View>
+              <Text style={[styles.featureTitle, { color: colors.text, fontSize: responsiveFontSize(16) }]}>
+                {feature.title}
+              </Text>
+              <Text style={[styles.featureDesc, { color: colors.textSecondary, fontSize: responsiveFontSize(12) }]}>
+                {feature.desc}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* Navigation Cards - Responsive */}
       <View style={styles.cardsContainer}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+        <Text style={[styles.sectionTitle, { color: colors.text, fontSize: responsiveFontSize(20) }]}>
           Quick Access
         </Text>
 
-        {/* Profile Card */}
         <TouchableOpacity 
           style={[styles.card, { backgroundColor: colors.card }]}
-          onPress={() => navigation.navigate('Profile')}
+          onPress={() => navigation.navigate('Profile', { userId: '123', userName: 'Sonam' })}
         >
           <View style={[styles.cardIcon, { backgroundColor: colors.accent }]}>
-            <AntDesign name="user" size={28} color={colors.primary} />
+            <AntDesign name="user" size={moderateScale(28)} color={colors.primary} />
           </View>
           <View style={styles.cardContent}>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>Profile</Text>
-            <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>
+            <Text style={[styles.cardTitle, { color: colors.text, fontSize: responsiveFontSize(16) }]}>
+              Profile
+            </Text>
+            <Text style={[styles.cardDesc, { color: colors.textSecondary, fontSize: responsiveFontSize(12) }]}>
               View and edit your profile
             </Text>
           </View>
-          <AntDesign name="right" size={20} color={colors.primary} />
+          <AntDesign name="right" size={moderateScale(20)} color={colors.primary} />
         </TouchableOpacity>
 
-        {/* Settings Card */}
         <TouchableOpacity 
           style={[styles.card, { backgroundColor: colors.card }]}
-          onPress={() => alert('Settings')}
+          onPress={() => alert('Settings - Coming Soon')}
         >
           <View style={[styles.cardIcon, { backgroundColor: colors.accent }]}>
-            <AntDesign name="setting" size={28} color={colors.primary} />
+            <AntDesign name="setting" size={moderateScale(28)} color={colors.primary} />
           </View>
           <View style={styles.cardContent}>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>Settings</Text>
-            <Text style={[styles.cardDesc, { color: colors.textSecondary }]}>
+            <Text style={[styles.cardTitle, { color: colors.text, fontSize: responsiveFontSize(16) }]}>
+              Settings
+            </Text>
+            <Text style={[styles.cardDesc, { color: colors.textSecondary, fontSize: responsiveFontSize(12) }]}>
               App preferences and options
             </Text>
           </View>
-          <AntDesign name="right" size={20} color={colors.primary} />
+          <AntDesign name="right" size={moderateScale(20)} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
-      {/* Info Box */}
+      {/* Orientation Info - For demonstration */}
       <View style={[styles.infoBox, { backgroundColor: colors.card }]}>
-        <AntDesign name="info-circle" size={24} color={colors.primary} />
-        <Text style={[styles.infoText, { color: colors.text }]}>
-          This app demonstrates navigation between Home and Profile screens using React Navigation.
+        <AntDesign name="info-circle" size={moderateScale(24)} color={colors.primary} />
+        <Text style={[styles.infoText, { color: colors.text, fontSize: responsiveFontSize(13) }]}>
+          Orientation: {orientation} | Device: {isTablet() ? 'Tablet' : 'Phone'} | Platform: {Platform.OS}
         </Text>
-      </View>
-
-      {/* Stats Section */}
-      <View style={[styles.statsContainer, { backgroundColor: colors.card }]}>
-        <View style={styles.statItem}>
-          <Text style={[styles.statNumber, { color: colors.primary }]}>156</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Posts</Text>
-        </View>
-        <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-        <View style={styles.statItem}>
-          <Text style={[styles.statNumber, { color: colors.primary }]}>2.5K</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Followers</Text>
-        </View>
-        <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-        <View style={styles.statItem}>
-          <Text style={[styles.statNumber, { color: colors.primary }]}>890</Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Following</Text>
-        </View>
       </View>
     </ScrollView>
   );
@@ -116,48 +161,51 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   header: {
-    paddingTop: 50,
-    paddingBottom: 40,
+    paddingTop: verticalScale(50),
+    paddingBottom: verticalScale(40),
     alignItems: 'center',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    borderBottomLeftRadius: moderateScale(30),
+    borderBottomRightRadius: moderateScale(30),
+  },
+  headerLandscape: {
+    paddingTop: verticalScale(30),
+    paddingBottom: verticalScale(25),
   },
   iconCircle: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: moderateScale(80),
+    height: moderateScale(80),
+    borderRadius: moderateScale(40),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
   },
   welcome: {
-    fontSize: 16,
     color: '#FFFFFF',
     opacity: 0.9,
   },
   appName: {
-    fontSize: 32,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginTop: 5,
+    marginTop: scale(5),
   },
   tagline: {
-    fontSize: 14,
     color: '#FFFFFF',
     opacity: 0.8,
-    marginTop: 8,
+    marginTop: scale(8),
   },
   themeButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 20,
-    marginTop: 20,
-    padding: 12,
-    borderRadius: 12,
-    gap: 8,
+    marginHorizontal: scale(20),
+    marginTop: verticalScale(20),
+    padding: moderateScale(12),
+    borderRadius: moderateScale(12),
+    gap: scale(8),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -165,23 +213,55 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   themeButtonText: {
-    fontSize: 14,
     fontWeight: '500',
   },
-  cardsContainer: {
-    padding: 20,
+  featuresContainer: {
+    padding: scale(20),
   },
   sectionTitle: {
-    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 15,
+    marginBottom: verticalScale(15),
+  },
+  featuresGrid: {
+    justifyContent: 'space-between',
+  },
+  featureCard: {
+    padding: moderateScale(20),
+    borderRadius: moderateScale(15),
+    marginBottom: verticalScale(15),
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  featureIconCircle: {
+    width: moderateScale(60),
+    height: moderateScale(60),
+    borderRadius: moderateScale(30),
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: verticalScale(12),
+  },
+  featureTitle: {
+    fontWeight: 'bold',
+    marginBottom: scale(6),
+    textAlign: 'center',
+  },
+  featureDesc: {
+    textAlign: 'center',
+  },
+  cardsContainer: {
+    paddingHorizontal: scale(20),
+    marginBottom: verticalScale(20),
   },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 12,
+    padding: moderateScale(15),
+    borderRadius: moderateScale(12),
+    marginBottom: verticalScale(12),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -189,32 +269,31 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   cardIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: moderateScale(50),
+    height: moderateScale(50),
+    borderRadius: moderateScale(25),
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: scale(15),
   },
   cardContent: {
     flex: 1,
   },
   cardTitle: {
-    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: scale(4),
   },
   cardDesc: {
-    fontSize: 12,
+    opacity: 0.7,
   },
   infoBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 20,
-    marginBottom: 20,
-    padding: 15,
-    borderRadius: 12,
-    gap: 12,
+    marginHorizontal: scale(20),
+    marginBottom: verticalScale(30),
+    padding: moderateScale(15),
+    borderRadius: moderateScale(12),
+    gap: scale(12),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -223,35 +302,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     flex: 1,
-    fontSize: 13,
     lineHeight: 20,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    marginHorizontal: 20,
-    marginBottom: 30,
-    borderRadius: 15,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  statLabel: {
-    fontSize: 12,
-    marginTop: 4,
-  },
-  statDivider: {
-    width: 1,
   },
 });
 

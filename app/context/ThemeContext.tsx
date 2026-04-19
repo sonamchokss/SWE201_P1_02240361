@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { Appearance } from 'react-native';
 
 export const themes = {
   light: {
-    primary: '#151B54', // Night Blue
+    primary: '#151B54',
     background: '#F8F9FF',
     card: '#FFFFFF',
     text: '#2D2D2D',
@@ -10,9 +11,17 @@ export const themes = {
     border: '#E0E0E0',
     accent: '#EEEEFF',
     statusBar: 'dark-content',
+    // Responsive spacing values
+    spacing: {
+      xs: 4,
+      sm: 8,
+      md: 16,
+      lg: 24,
+      xl: 32,
+    },
   },
   dark: {
-    primary: '#2A3170', // Lighter night blue for dark mode
+    primary: '#2A3170',
     background: '#121212',
     card: '#1E1E1E',
     text: '#FFFFFF',
@@ -20,6 +29,13 @@ export const themes = {
     border: '#333333',
     accent: '#2A2A3A',
     statusBar: 'light-content',
+    spacing: {
+      xs: 4,
+      sm: 8,
+      md: 16,
+      lg: 24,
+      xl: 32,
+    },
   },
 };
 
