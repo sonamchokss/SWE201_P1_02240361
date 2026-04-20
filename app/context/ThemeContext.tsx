@@ -1,17 +1,25 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, ReactNode, useContext, useMemo, useState } from 'react';
 import { Appearance } from 'react-native';
 
 export const themes = {
   light: {
-    primary: '#151B54',
-    background: '#F8F9FF',
+    primary: '#667EEA',
+    secondary: '#764BA2',
+    gradientStart: '#667EEA',
+    gradientEnd: '#764BA2',
+    background: '#F5F7FA',
+    surface: '#FFFFFF',
     card: '#FFFFFF',
-    text: '#2D2D2D',
-    textSecondary: '#666666',
-    border: '#E0E0E0',
-    accent: '#EEEEFF',
+    tabBar: '#FFFFFFE6',
+    text: '#0F172A',
+    textSecondary: '#475569',
+    border: '#E2E8F0',
+    accent: '#EEF2FF',
+    success: '#10B981',
+    danger: '#EF4444',
+    shadow: '#1E293B',
+    glass: 'rgba(255, 255, 255, 0.65)',
     statusBar: 'dark-content',
-    // Responsive spacing values
     spacing: {
       xs: 4,
       sm: 8,
@@ -21,13 +29,22 @@ export const themes = {
     },
   },
   dark: {
-    primary: '#2A3170',
-    background: '#121212',
-    card: '#1E1E1E',
-    text: '#FFFFFF',
-    textSecondary: '#AAAAAA',
-    border: '#333333',
-    accent: '#2A2A3A',
+    primary: '#7C93F6',
+    secondary: '#A78BFA',
+    gradientStart: '#334155',
+    gradientEnd: '#0F172A',
+    background: '#0F172A',
+    surface: '#111C31',
+    card: '#1E293B',
+    tabBar: '#1E293BE8',
+    text: '#F8FAFC',
+    textSecondary: '#CBD5E1',
+    border: '#334155',
+    accent: '#24354F',
+    success: '#34D399',
+    danger: '#F87171',
+    shadow: '#020617',
+    glass: 'rgba(30, 41, 59, 0.7)',
     statusBar: 'light-content',
     spacing: {
       xs: 4,
@@ -51,13 +68,14 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  const [theme, setTheme] = useState<ThemeType>('light');
+  const systemScheme = Appearance.getColorScheme();
+  const [theme, setTheme] = useState<ThemeType>(systemScheme === 'dark' ? 'dark' : 'light');
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
-  const colors = themes[theme];
+  const colors = useMemo(() => themes[theme], [theme]);
 
   return (
     <ThemeContext.Provider value={{ theme, colors, toggleTheme, setTheme }}>

@@ -1,54 +1,62 @@
-import { Dimensions, Platform, PixelRatio } from 'react-native';
+import { Dimensions, PixelRatio, Platform } from 'react-native';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-// Responsive width (based on iPhone 8 screen width - 375)
 const guidelineBaseWidth = 375;
 const guidelineBaseHeight = 667;
 
-// Scale function for responsive sizing
-export const scale = (size) => (SCREEN_WIDTH / guidelineBaseWidth) * size;
+export const getWindowDimensions = () => Dimensions.get('window');
 
-// Vertical scale function
-export const verticalScale = (size) => (SCREEN_HEIGHT / guidelineBaseHeight) * size;
+export const scale = (size, width = getWindowDimensions().width) => (width / guidelineBaseWidth) * size;
 
-// Moderate scale (with limit)
-export const moderateScale = (size, factor = 0.5) => size + (scale(size) - size) * factor;
+export const verticalScale = (size, height = getWindowDimensions().height) => (height / guidelineBaseHeight) * size;
 
-// Check if device is tablet
-export const isTablet = () => {
-  const pixelDensity = PixelRatio.get();
-  const adjustedWidth = SCREEN_WIDTH * pixelDensity;
-  const adjustedHeight = SCREEN_HEIGHT * pixelDensity;
-  return (adjustedWidth >= 600 || adjustedHeight >= 600);
+export const moderateScale = (size, factor = 0.5, width = getWindowDimensions().width) => {
+  return size + (scale(size, width) - size) * factor;
 };
 
-// Get orientation
-export const isPortrait = () => SCREEN_HEIGHT > SCREEN_WIDTH;
-export const isLandscape = () => SCREEN_WIDTH > SCREEN_HEIGHT;
+export const isTablet = (width = getWindowDimensions().width, height = getWindowDimensions().height) => {
+  const shortestSide = Math.min(width, height);
+  const densityIndependentSide = shortestSide / PixelRatio.get();
+  return densityIndependentSide >= 600;
+};
+
+export const isPortrait = (width = getWindowDimensions().width, height = getWindowDimensions().height) => {
+  return height >= width;
+};
+
+export const isLandscape = (width = getWindowDimensions().width, height = getWindowDimensions().height) => {
+  return width > height;
+};
+
+export const getDeviceOrientation = (width = getWindowDimensions().width, height = getWindowDimensions().height) => {
+  return isPortrait(width, height) ? 'portrait' : 'landscape';
+};
 
 // Platform specific values
 export const isIOS = Platform.OS === 'ios';
 export const isAndroid = Platform.OS === 'android';
 
-// Responsive font size
-export const responsiveFontSize = (size) => {
-  const newSize = scale(size);
+export const responsiveFontSize = (size, width = getWindowDimensions().width) => {
+  const newSize = scale(size, width);
   if (Platform.OS === 'ios') {
     return Math.round(PixelRatio.roundToNearestPixel(newSize));
   }
   return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2;
 };
 
+export const getScreenWidth = () => getWindowDimensions().width;
+export const getScreenHeight = () => getWindowDimensions().height;
+
 export default {
-  SCREEN_WIDTH,
-  SCREEN_HEIGHT,
+  getWindowDimensions,
+  getScreenWidth,
+  getScreenHeight,
   scale,
   verticalScale,
   moderateScale,
   isTablet,
   isPortrait,
   isLandscape,
+  getDeviceOrientation,
   isIOS,
   isAndroid,
   responsiveFontSize,

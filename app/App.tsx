@@ -1,12 +1,12 @@
-import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import React from 'react';
+import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import MainStackNavigator from './navigation/MainStackNavigator';
-import { StatusBar } from 'react-native';
 
 const AppContent = () => {
-  const { colors, theme } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <>

@@ -1,24 +1,49 @@
 import { AntDesign } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TouchableOpacity,
-  View
+    Alert,
+    Dimensions,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '../context/ThemeContext';
-import { isPortrait, moderateScale, responsiveFontSize, scale, verticalScale } from '../utils/responsive';
+import { getDeviceOrientation, getWindowDimensions, moderateScale, responsiveFontSize, scale, verticalScale } from '../utils/responsive';
 
 const ProfileScreen = ({ navigation, route }) => {
   const { colors } = useTheme();
+  const tabBarHeight = useBottomTabBarHeight();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [orientation, setOrientation] = useState(isPortrait() ? 'portrait' : 'landscape');
+  const [windowSize, setWindowSize] = useState(getWindowDimensions());
+  const [orientation, setOrientation] = useState(getDeviceOrientation());
+  const [refreshing, setRefreshing] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('Building a clean and modern profile experience.');
+  const [counter, setCounter] = useState(0);
 
-  // Receiving data passed from HomeScreen
-  const { userId, userName } = route.params || { userId: 'N/A', userName: 'Sonam' };
+  const { userId, userName } = route.params || {
+    userId: 'N/A',
+    userName: 'Sonam',
+  };
+
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setWindowSize(window);
+      setOrientation(getDeviceOrientation(window.width, window.height));
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   const menuItems = [
     { id: 1, icon: 'setting', title: 'Account Settings', color: '#4ECDC4' },
@@ -29,108 +54,163 @@ const ProfileScreen = ({ navigation, route }) => {
     { id: 6, icon: 'logout', title: 'Logout', color: '#FF6B6B' },
   ];
 
+  const onRefresh = () => {
+    setRefreshing(true);
+    Haptics.selectionAsync();
+    setTimeout(() => setRefreshing(false), 900);
+  };
+
+  const columns = useMemo(() => (orientation === 'landscape' ? 2 : 1), [orientation]);
+
   const handleMenuItemPress = (item) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (item.title === 'Logout') {
       Alert.alert(
-        'Logout',
-        'Are you sure you want to logout?',
+        'Confirm Logout',
+        'Would you like to return to Home now?',
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Logout', style: 'destructive', onPress: () => navigation.navigate('Home') }
+          { text: 'Stay', style: 'cancel' },
+          {
+            text: 'Go to Home',
+            style: 'destructive',
+            onPress: () => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              navigation.navigate('Home');
+            },
+          },
         ]
       );
     } else if (item.title !== 'Notifications') {
-      Alert.alert(item.title, 'This feature is coming soon!');
+      Alert.alert(item.title, 'This section is in progress and will be available soon.', [{ text: 'OK', style: 'default' }]);
     }
   };
 
   return (
-    <ScrollView 
+    <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[styles.scrollContent, { paddingBottom: tabBarHeight + verticalScale(28) }]}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
     >
-      {/* Profile Header - Responsive */}
-      <View style={[
-        styles.header, 
-        { backgroundColor: colors.primary },
-        orientation === 'landscape' && styles.headerLandscape
-      ]}>
-        <View style={styles.avatar}>
+      <LinearGradient
+        colors={[colors.gradientStart, colors.gradientEnd]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, orientation === 'landscape' && styles.headerLandscape]}
+      >
+        <View style={[styles.avatar, { shadowColor: colors.shadow }]}> 
           <AntDesign name="user" size={moderateScale(60)} color={colors.primary} />
         </View>
-        <Text style={[styles.name, { fontSize: responsiveFontSize(24), color: '#FFFFFF' }]}>
+        <Text style={[styles.name, { fontSize: responsiveFontSize(24, windowSize.width), color: '#FFFFFF' }]}>
           {userName}
         </Text>
-        <Text style={[styles.bio, { fontSize: responsiveFontSize(14), color: '#FFFFFF', opacity: 0.9 }]}>
+        <Text style={[styles.bio, { fontSize: responsiveFontSize(14, windowSize.width), color: '#FFFFFF', opacity: 0.92 }]}>
           Mobile Developer
         </Text>
-        <Text style={[styles.userId, { fontSize: responsiveFontSize(12), color: '#FFFFFF', opacity: 0.7 }]}>
+        <Text style={[styles.userId, { fontSize: responsiveFontSize(12, windowSize.width), color: '#FFFFFF', opacity: 0.8 }]}>
           User ID: {userId}
         </Text>
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.editButton}
-          onPress={() => Alert.alert('Edit Profile', 'Profile editing coming soon!')}
+          onPress={() => {
+            Haptics.selectionAsync();
+            Alert.alert('Edit Profile', 'Profile editing module will be enabled in a future update.');
+          }}
         >
           <AntDesign name="edit" size={moderateScale(14)} color="#FFFFFF" />
-          <Text style={[styles.editButtonText, { fontSize: responsiveFontSize(12) }]}>Edit Profile</Text>
+          <Text style={[styles.editButtonText, { fontSize: responsiveFontSize(12, windowSize.width) }]}>Edit Profile</Text>
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
 
-      {/* Stats Section - Responsive Grid */}
-      <View style={[styles.statsContainer, { backgroundColor: colors.card }]}>
+      <View style={[styles.statsContainer, { backgroundColor: colors.card, shadowColor: colors.shadow, borderColor: colors.border }]}> 
         <View style={styles.statItem}>
-          <Text style={[styles.statNumber, { color: colors.primary, fontSize: responsiveFontSize(20) }]}>
+          <Text style={[styles.statNumber, { color: colors.primary, fontSize: responsiveFontSize(20, windowSize.width) }]}>
             156
           </Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: responsiveFontSize(12) }]}>
+          <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: responsiveFontSize(12, windowSize.width) }]}>
             Posts
           </Text>
         </View>
         <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
         <View style={styles.statItem}>
-          <Text style={[styles.statNumber, { color: colors.primary, fontSize: responsiveFontSize(20) }]}>
+          <Text style={[styles.statNumber, { color: colors.primary, fontSize: responsiveFontSize(20, windowSize.width) }]}>
             2.5K
           </Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: responsiveFontSize(12) }]}>
+          <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: responsiveFontSize(12, windowSize.width) }]}>
             Followers
           </Text>
         </View>
         <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
         <View style={styles.statItem}>
-          <Text style={[styles.statNumber, { color: colors.primary, fontSize: responsiveFontSize(20) }]}>
+          <Text style={[styles.statNumber, { color: colors.primary, fontSize: responsiveFontSize(20, windowSize.width) }]}>
             890
           </Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: responsiveFontSize(12) }]}>
+          <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: responsiveFontSize(12, windowSize.width) }]}>
             Following
           </Text>
         </View>
       </View>
 
-      {/* About Section */}
-      <View style={[styles.section, { backgroundColor: colors.card }]}>
-        <View style={styles.sectionHeader}>
-          <AntDesign name="info-circle" size={moderateScale(22)} color={colors.primary} />
-          <Text style={[styles.sectionTitle, { color: colors.text, fontSize: responsiveFontSize(18) }]}>
-            About
+      <View style={[styles.sectionRow, columns === 2 && styles.sectionRowLandscape]}>
+        <Animated.View entering={FadeInDown.delay(80).springify()} style={[styles.section, { backgroundColor: colors.card, shadowColor: colors.shadow, borderColor: colors.border }, columns === 2 && styles.halfSection]}>
+          <View style={styles.sectionHeader}>
+            <AntDesign name="info-circle" size={moderateScale(22)} color={colors.primary} />
+            <Text style={[styles.sectionTitle, { color: colors.text, fontSize: responsiveFontSize(18, windowSize.width) }]}>About</Text>
+          </View>
+          <Text style={[styles.sectionText, { color: colors.textSecondary, fontSize: responsiveFontSize(14, windowSize.width), lineHeight: moderateScale(22) }]}>
+            Passionate mobile developer building production-ready apps focused on clean architecture and thoughtful user experience.
           </Text>
-        </View>
-        <Text style={[styles.sectionText, { color: colors.textSecondary, fontSize: responsiveFontSize(14), lineHeight: moderateScale(22) }]}>
-          Passionate mobile developer with 4+ years of experience creating beautiful apps with React Native. Specialized in cross-platform development and UI/UX design.
-        </Text>
+        </Animated.View>
+
+        <Animated.View entering={FadeInDown.delay(130).springify()} style={[styles.section, { backgroundColor: colors.card, shadowColor: colors.shadow, borderColor: colors.border }, columns === 2 && styles.halfSection]}>
+          <View style={styles.sectionHeader}>
+            <AntDesign name="rocket" size={moderateScale(22)} color={colors.primary} />
+            <Text style={[styles.sectionTitle, { color: colors.text, fontSize: responsiveFontSize(18, windowSize.width) }]}>State Demo</Text>
+          </View>
+          <Text style={[styles.counterLabel, { color: colors.textSecondary, fontSize: responsiveFontSize(12, windowSize.width) }]}>Counter value: {counter}</Text>
+          <View style={styles.counterRow}>
+            <TouchableOpacity
+              style={[styles.counterButton, { backgroundColor: colors.accent }]}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setCounter((prev) => Math.max(0, prev - 1));
+              }}
+            >
+              <AntDesign name="minus" size={16} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.counterButton, { backgroundColor: colors.accent }]}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setCounter((prev) => prev + 1);
+              }}
+            >
+              <AntDesign name="plus" size={16} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+
+          <TextInput
+            value={statusMessage}
+            onChangeText={setStatusMessage}
+            placeholder="Update your status"
+            placeholderTextColor={colors.textSecondary}
+            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.surface }]}
+          />
+        </Animated.View>
       </View>
-      {/* Skills Section - Responsive Tags */}
-      <View style={[styles.section, { backgroundColor: colors.card }]}>
+
+      <View style={[styles.section, { backgroundColor: colors.card, shadowColor: colors.shadow, borderColor: colors.border }]}> 
         <View style={styles.sectionHeader}>
           <AntDesign name="star" size={moderateScale(22)} color={colors.primary} />
-          <Text style={[styles.sectionTitle, { color: colors.text, fontSize: responsiveFontSize(18) }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text, fontSize: responsiveFontSize(18, windowSize.width) }]}>
             Skills
           </Text>
         </View>
         <View style={styles.skillsContainer}>
           {['React Native', 'JavaScript', 'TypeScript', 'UI/UX', 'Node.js', 'Firebase', 'Redux', 'GraphQL'].map((skill, index) => (
             <View key={index} style={[styles.skill, { backgroundColor: colors.accent }]}>
-              <Text style={[styles.skillText, { color: colors.primary, fontSize: responsiveFontSize(12) }]}>
+              <Text style={[styles.skillText, { color: colors.primary, fontSize: responsiveFontSize(12, windowSize.width) }]}>
                 {skill}
               </Text>
             </View>
@@ -138,27 +218,31 @@ const ProfileScreen = ({ navigation, route }) => {
         </View>
       </View>
 
-      {/* Menu Items */}
-      <View style={[styles.menuContainer, { backgroundColor: colors.card }]}>
+      <View style={[styles.menuContainer, { backgroundColor: colors.card, shadowColor: colors.shadow, borderColor: colors.border }]}> 
         {menuItems.map((item) => (
-          <TouchableOpacity 
-            key={item.id} 
+          <TouchableOpacity
+            key={item.id}
             style={styles.menuItem}
             onPress={() => handleMenuItemPress(item)}
             activeOpacity={0.7}
           >
             <View style={styles.menuLeft}>
               <AntDesign name={item.icon} size={moderateScale(20)} color={item.color} />
-              <Text style={[styles.menuText, { color: colors.text, fontSize: responsiveFontSize(14) }]}>
+              <Text style={[styles.menuText, { color: colors.text, fontSize: responsiveFontSize(14, windowSize.width) }]}>
                 {item.title}
               </Text>
             </View>
             {item.hasSwitch ? (
               <Switch
                 value={notificationsEnabled}
-                onValueChange={setNotificationsEnabled}
-                trackColor={{ false: colors.border, true: colors.primary }}
+                onValueChange={(value) => {
+                  Haptics.selectionAsync();
+                  setNotificationsEnabled(value);
+                }}
+                trackColor={{ false: '#94A3B8', true: colors.primary }}
                 thumbColor="#FFFFFF"
+                ios_backgroundColor="#94A3B8"
+                style={styles.notificationSwitch}
               />
             ) : (
               <AntDesign name="right" size={moderateScale(16)} color={colors.textSecondary} />
@@ -167,13 +251,15 @@ const ProfileScreen = ({ navigation, route }) => {
         ))}
       </View>
 
-      {/* Back Button */}
       <TouchableOpacity
-        style={[styles.backButton, { backgroundColor: colors.primary }]}
-        onPress={() => navigation.goBack()}
+        style={[styles.backButton, { backgroundColor: colors.primary, shadowColor: colors.shadow, marginBottom: verticalScale(10) }]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          navigation.goBack();
+        }}
       >
         <AntDesign name="arrow-left" size={moderateScale(20)} color="#FFFFFF" />
-        <Text style={[styles.backButtonText, { fontSize: responsiveFontSize(16), color: '#FFFFFF' }]}>
+        <Text style={[styles.backButtonText, { fontSize: responsiveFontSize(16, windowSize.width), color: '#FFFFFF' }]}>
           Back to Home
         </Text>
       </TouchableOpacity>
@@ -187,11 +273,13 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: verticalScale(20),
   },
   header: {
     alignItems: 'center',
-    paddingTop: verticalScale(40),
-    paddingBottom: verticalScale(30),
+    paddingTop: verticalScale(34),
+    paddingBottom: verticalScale(26),
+    paddingHorizontal: scale(20),
     borderBottomLeftRadius: moderateScale(30),
     borderBottomRightRadius: moderateScale(30),
   },
@@ -207,7 +295,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: verticalScale(15),
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -241,7 +328,7 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(-20),
     borderRadius: moderateScale(15),
     padding: moderateScale(20),
-    shadowColor: '#000',
+    borderWidth: 1,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -260,16 +347,29 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
   },
-  section: {
-    marginHorizontal: scale(20),
+  sectionRow: {
     marginTop: verticalScale(20),
+    paddingHorizontal: scale(20),
+  },
+  sectionRowLandscape: {
+    flexDirection: 'row',
+    gap: scale(14),
+  },
+  section: {
+    marginTop: verticalScale(20),
+    marginHorizontal: scale(20),
     padding: moderateScale(20),
     borderRadius: moderateScale(15),
-    shadowColor: '#000',
+    borderWidth: 1,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+  },
+  halfSection: {
+    flex: 1,
+    marginHorizontal: 0,
+    marginTop: 0,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -282,6 +382,28 @@ const styles = StyleSheet.create({
   },
   sectionText: {
     lineHeight: moderateScale(22),
+  },
+  counterLabel: {
+    marginBottom: verticalScale(8),
+  },
+  counterRow: {
+    flexDirection: 'row',
+    gap: scale(10),
+    marginBottom: verticalScale(12),
+  },
+  counterButton: {
+    width: moderateScale(36),
+    height: moderateScale(36),
+    borderRadius: moderateScale(10),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: moderateScale(12),
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(10),
+    fontSize: moderateScale(13),
   },
   skillsContainer: {
     flexDirection: 'row',
@@ -300,7 +422,7 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(20),
     borderRadius: moderateScale(15),
     overflow: 'hidden',
-    shadowColor: '#000',
+    borderWidth: 1,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -312,7 +434,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: moderateScale(16),
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#CBD5E1',
   },
   menuLeft: {
     flexDirection: 'row',
@@ -322,16 +444,18 @@ const styles = StyleSheet.create({
   menuText: {
     fontWeight: '500',
   },
+  notificationSwitch: {
+    transform: [{ scaleX: 1.05 }, { scaleY: 1.05 }],
+  },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: scale(20),
-    marginVertical: verticalScale(30),
+    marginTop: verticalScale(22),
     padding: moderateScale(14),
     borderRadius: moderateScale(12),
     gap: scale(8),
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
