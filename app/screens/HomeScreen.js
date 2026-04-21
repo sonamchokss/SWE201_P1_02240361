@@ -4,16 +4,16 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    FlatList,
-    Platform,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  FlatList,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { useTheme } from '../context/ThemeContext';
@@ -28,7 +28,7 @@ const FEATURES = [
   { id: '6', icon: 'star', title: 'Polished', desc: 'Modern interactions with haptic feedback' },
 ];
 
-const FeatureCard = ({ item, colors, windowSize, index, numColumns }) => {
+const FeatureCard = ({ item, colors, windowSize, index, numColumns, styles }) => {
   const pressScale = useSharedValue(1);
 
   const cardAnimatedStyle = useAnimatedStyle(() => ({
@@ -87,6 +87,7 @@ const HomeScreen = ({ navigation }) => {
   const [orientation, setOrientation] = useState(getDeviceOrientation());
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const styles = useMemo(() => createStyles(), [windowSize.width, windowSize.height]);
 
   useEffect(() => {
     const bootTimer = setTimeout(() => setIsLoading(false), 1100);
@@ -223,6 +224,7 @@ const HomeScreen = ({ navigation }) => {
                 colors={colors}
                 windowSize={windowSize}
                 numColumns={numColumns}
+                styles={styles}
               />
             )}
             keyExtractor={(item) => item.id}
@@ -275,7 +277,7 @@ const HomeScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = () => StyleSheet.create({
   container: {
     flex: 1,
   },

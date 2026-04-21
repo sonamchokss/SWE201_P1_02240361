@@ -3,7 +3,7 @@
     "name": "Practical1App",
     "slug": "Practical1App",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/icon.png",
     "scheme": "practical1app",
     "userInterfaceStyle": "automatic",

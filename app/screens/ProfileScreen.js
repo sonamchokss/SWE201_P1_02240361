@@ -4,16 +4,16 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Dimensions,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTheme } from '../context/ThemeContext';
@@ -28,6 +28,7 @@ const ProfileScreen = ({ navigation, route }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [statusMessage, setStatusMessage] = useState('Building a clean and modern profile experience.');
   const [counter, setCounter] = useState(0);
+  const styles = useMemo(() => createStyles(), [windowSize.width, windowSize.height]);
 
   const { userId, userName } = route.params || {
     userId: 'N/A',
@@ -267,7 +268,7 @@ const ProfileScreen = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = () => StyleSheet.create({
   container: {
     flex: 1,
   },
